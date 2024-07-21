@@ -1,15 +1,10 @@
 import random
-import subprocess
-import time
-
 import matplotlib.pyplot as plt
 import numpy as np
 import os
 import math
 import imageio.v2 as imageio
 import shutil
-
-import pygetwindow
 
 
 class TextColors:
