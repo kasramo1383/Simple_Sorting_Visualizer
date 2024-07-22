@@ -8,6 +8,8 @@ import math
 import imageio.v2 as imageio
 
 import shutil
+
+from matplotlib.ticker import MaxNLocator
 from pydub import AudioSegment
 from pydub.generators import Sine
 
@@ -88,7 +90,7 @@ def bubblesort():
 
             comparison_count += 1
             draw_bar_graph(j)
-            number_to_frequency_and_add_tone(held, n)
+            number_to_frequency_and_add_tone(compared, n)
 
 
 # endregion
@@ -101,12 +103,15 @@ def draw_bar_graph(highlighted_element):
 
     plt.figure(figsize=(20, 10), dpi=150)
     plt.bar(x, global_number_list, color=colors, edgecolor='black')
-    plt.xlabel("Index")
-    plt.ylabel("Value")
-    plt.title("Elements of the Array")
+
+    plt.gca().xaxis.set_major_locator(MaxNLocator(integer=True))
+    plt.gca().yaxis.set_major_locator(MaxNLocator(integer=True))
+
+    plt.tight_layout()
     plot_filename = os.path.join(plot_directory, f"plot_{plot_counter:03d}.png")
-    plt.savefig(plot_filename)
+    plt.savefig(plot_filename, bbox_inches='tight')
     plt.close()
+
     plot_counter += 1
 
 
@@ -119,11 +124,13 @@ def draw_final_bar_graphs():
 
         plt.figure(figsize=(20, 10), dpi=150)
         plt.bar(x, global_number_list, color=colors, edgecolor='black')
-        plt.xlabel("Index")
-        plt.ylabel("Value")
-        plt.title("Elements of the Array")
+
+        plt.gca().xaxis.set_major_locator(MaxNLocator(integer=True))
+        plt.gca().yaxis.set_major_locator(MaxNLocator(integer=True))
+
+        plt.tight_layout()
         plot_filename = os.path.join(plot_directory, f"plot_{plot_counter:03d}.png")
-        plt.savefig(plot_filename)
+        plt.savefig(plot_filename, bbox_inches='tight')
         plt.close()
         plot_counter += 1
 
