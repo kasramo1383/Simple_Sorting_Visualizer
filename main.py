@@ -67,7 +67,7 @@ def quicksort(lower_bound, upper_bound):
         swap_count += 1
 
         pivot_index = lower_bound + len(first_half)
-        draw_bar_graph(global_number_list, pivot_index)
+        draw_bar_graph(pivot_index)
         number_to_frequency_and_add_tone(pivot, n)
 
         quicksort(lower_bound, pivot_index - 1)
@@ -87,20 +87,20 @@ def bubblesort():
                 swap_count += 1
 
             comparison_count += 1
-            draw_bar_graph(global_number_list, j)
+            draw_bar_graph(j)
             number_to_frequency_and_add_tone(held, n)
 
 
 # endregion
 # region Other Methods
-def draw_bar_graph(arr, highlighted_element):
+def draw_bar_graph(highlighted_element):
     global plot_counter
-    x = np.arange(len(arr))
-    colors = ['blue'] * len(arr)
+    x = np.arange(len(global_number_list))
+    colors = ['blue'] * len(global_number_list)
     colors[highlighted_element] = 'red'
 
     plt.figure(figsize=(20, 10), dpi=150)
-    plt.bar(x, arr, color=colors)
+    plt.bar(x, global_number_list, color=colors, edgecolor='black')
     plt.xlabel("Index")
     plt.ylabel("Value")
     plt.title("Elements of the Array")
@@ -110,13 +110,35 @@ def draw_bar_graph(arr, highlighted_element):
     plot_counter += 1
 
 
+def draw_final_bar_graphs():
+    global plot_counter
+    colors = ['white'] * len(global_number_list)
+    for i in range(len(global_number_list)):
+        x = np.arange(len(global_number_list))
+        colors[i] = 'green'
+
+        plt.figure(figsize=(20, 10), dpi=150)
+        plt.bar(x, global_number_list, color=colors, edgecolor='black')
+        plt.xlabel("Index")
+        plt.ylabel("Value")
+        plt.title("Elements of the Array")
+        plot_filename = os.path.join(plot_directory, f"plot_{plot_counter:03d}.png")
+        plt.savefig(plot_filename)
+        plt.close()
+        plot_counter += 1
+
+
 def number_to_frequency_and_add_tone(number, max_number):
     global melody
-    min_freq = 220  # A3 note
-    max_freq = 880  # A5 note
+    min_freq = 200
+    max_freq = 500
     frequency = min_freq + (max_freq - min_freq) * (number - 1) / (max_number - 1)
     tone = generate_tone(frequency)
     melody += tone
+
+
+def all_number_to_frequency_and_add_tone():
+    for element in global_number_list: number_to_frequency_and_add_tone(element, n)
 
 
 def generate_tone(frequency, duration=100):
@@ -143,11 +165,11 @@ except Exception as e:
 os.makedirs(render_directory)
 os.makedirs(plot_directory)
 
-draw_bar_graph(global_number_list, len(global_number_list) - 1)
-
 # region Sorting Algorithm match case
 match input(f"{TextColors.GREEN}enter the sorting algorithm [quick sort, bubble sort]: {TextColors.RESET}"):
     case "bubble sort" | "bubblesort":
+        draw_bar_graph(0)
+
         print(
             f"{TextColors.CYAN}sorting using bubble sort, creating plots and saving them as images...{TextColors.RESET}")
         bubblesort()
@@ -162,6 +184,8 @@ match input(f"{TextColors.GREEN}enter the sorting algorithm [quick sort, bubble 
         print(f"{TextColors.YELLOW}        <-------/TECHNICAL INFO-------->{TextColors.RESET}")
 
     case "quick sort" | "quicksort":
+        draw_bar_graph(len(global_number_list) - 1)
+
         print(
             f"{TextColors.CYAN}sorting using quick sort, creating plots and saving them as images...{TextColors.RESET}")
         quicksort(0, len(global_number_list) - 1)
@@ -182,22 +206,23 @@ match input(f"{TextColors.GREEN}enter the sorting algorithm [quick sort, bubble 
 fig, ax = plt.subplots()
 
 # region rendering
+print(f"{TextColors.CYAN}rendering the final state of the array...{TextColors.RESET}")
+draw_final_bar_graphs()
+all_number_to_frequency_and_add_tone()
+
 plot_filenames = sorted(
     [os.path.join(plot_directory, fname) for fname in os.listdir(plot_directory) if fname.endswith('.png')])
 
 images = []
 
-print(f"{TextColors.CYAN}rendering gif from plot images...{TextColors.RESET}")
+print(f"{TextColors.CYAN}creating gif from plot images...{TextColors.RESET}")
 
 for filename in plot_filenames:
     images.append(imageio.imread(filename))
 imageio.mimsave(render_directory + '\\animation_of_plots.gif', images)
 
-
-
-print(f"{TextColors.CYAN}exporting audio file...{TextColors.RESET}")
+print(f"{TextColors.CYAN}creating audio file...{TextColors.RESET}")
 melody.export(render_directory + "\\melody.wav", format="wav")
-
 
 print(f"{TextColors.CYAN}creating video...{TextColors.RESET}")
 
@@ -208,9 +233,9 @@ gif_clip = gif_clip.set_duration(max(gif_clip.duration, audio_clip.duration) + 2
 
 video_with_audio = gif_clip.set_audio(audio_clip)
 
-progress_logger = TqdmProgressBarLogger(bars=['main'],print_messages=False,notebook=False)
-video_with_audio.write_videofile(render_directory + "\\output_video.mp4", codec="libx264", audio_codec="aac", logger=progress_logger)
-
+progress_logger = TqdmProgressBarLogger(bars=['main'], print_messages=False, notebook=False)
+video_with_audio.write_videofile(render_directory + "\\output_video.mp4", codec="libx264", audio_codec="aac",
+                                 logger=progress_logger)
 
 print(f"{TextColors.BOLD}{TextColors.CYAN}done! opening the render directory")
 try:
