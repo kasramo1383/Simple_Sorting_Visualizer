@@ -9,6 +9,8 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v2
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Set up Python
       uses: actions/setup-python@v2
@@ -23,8 +25,12 @@ jobs:
     - name: Build executable
       run: pyinstaller --onefile --distpath . main.py
 
-    - name: Upload executable
-      uses: actions/upload-artifact@v2
-      with:
-        name: executable
-        path: main.exe
+    - name: Commit executable
+      run: |
+        git config --global user.name 'github-actions[bot]'
+        git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+        git add main.exe
+        git commit -m 'Add built executable'
+        git push
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
