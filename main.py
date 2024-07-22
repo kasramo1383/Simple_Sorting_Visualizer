@@ -1,11 +1,21 @@
+# region Modules
 import random
 import matplotlib.pyplot as plt
 import numpy as np
 import os
 import math
-import imageio.v2 as imageio
-import shutil
 
+import imageio.v2 as imageio
+
+import shutil
+from pydub import AudioSegment
+from pydub.generators import Sine
+
+from proglog import TqdmProgressBarLogger
+from moviepy.editor import VideoFileClip, AudioFileClip
+
+
+# endregion
 
 class TextColors:
     MAGENTA = '\033[95m'
@@ -19,6 +29,24 @@ class TextColors:
     UNDERLINE = '\033[4m'
 
 
+# region Variables
+melody = AudioSegment.silent(duration=0)
+
+n = int(input(f"{TextColors.GREEN}Enter the desired number of elements: {TextColors.RESET}"))
+
+global_number_list = [i for i in range(1, n + 1)]
+
+render_directory = os.getcwd() + "\\visual render of sorting"
+plot_directory = render_directory + "\\plots"
+
+plot_counter = 0
+comparison_count = 0
+
+swap_count = 0
+
+
+# endregion
+# region Sorting Methods
 def quicksort(lower_bound, upper_bound):
     global global_number_list, comparison_count, swap_count
 
@@ -40,6 +68,7 @@ def quicksort(lower_bound, upper_bound):
 
         pivot_index = lower_bound + len(first_half)
         draw_bar_graph(global_number_list, pivot_index)
+        number_to_frequency_and_add_tone(pivot, n)
 
         quicksort(lower_bound, pivot_index - 1)
         quicksort(pivot_index + 1, upper_bound)
@@ -49,15 +78,21 @@ def bubblesort():
     global global_number_list, comparison_count, swap_count
     for i in range(len(global_number_list)):
         for j in range(0, len(global_number_list) - 1 - i):
-            if global_number_list[j] > global_number_list[j + 1]:
+            held = global_number_list[j]
+            compared = global_number_list[j + 1]
+            if held > compared:
                 temp = global_number_list[j]
-                global_number_list[j] = global_number_list[j + 1]
+                global_number_list[j] = compared
                 global_number_list[j + 1] = temp
                 swap_count += 1
+
             comparison_count += 1
             draw_bar_graph(global_number_list, j)
+            number_to_frequency_and_add_tone(held, n)
 
 
+# endregion
+# region Other Methods
 def draw_bar_graph(arr, highlighted_element):
     global plot_counter
     x = np.arange(len(arr))
@@ -75,17 +110,30 @@ def draw_bar_graph(arr, highlighted_element):
     plot_counter += 1
 
 
-n = int(input(f"{TextColors.GREEN}Enter the desired number of elements: {TextColors.RESET}"))
+def number_to_frequency_and_add_tone(number, max_number):
+    global melody
+    min_freq = 220  # A3 note
+    max_freq = 880  # A5 note
+    frequency = min_freq + (max_freq - min_freq) * (number - 1) / (max_number - 1)
+    tone = generate_tone(frequency)
+    melody += tone
 
-global_number_list = [None] * n
 
-for i in range(n):
-    global_number_list[i] = random.randint(1, n)
+def generate_tone(frequency, duration=100):
+    return Sine(frequency).to_audio_segment(duration=duration)
+
+
+def update(frame):
+    img = plt.imread(frame)
+    ax.imshow(img)
+    ax.axis('off')
+
+
+# endregion
+
+random.shuffle(global_number_list)
+
 print(f"{TextColors.YELLOW}{global_number_list}{TextColors.RESET}")
-
-render_directory = os.getcwd() + "\\visual render of sorting"
-plot_directory = render_directory + "\\plots"
-gif_directory = render_directory + "\\gif"
 
 try:
     shutil.rmtree(render_directory)
@@ -94,15 +142,10 @@ except Exception as e:
 
 os.makedirs(render_directory)
 os.makedirs(plot_directory)
-os.makedirs(gif_directory)
-
-plot_counter = 0
-comparison_count = 0
-
-swap_count = 0
 
 draw_bar_graph(global_number_list, len(global_number_list) - 1)
 
+# region Sorting Algorithm match case
 match input(f"{TextColors.GREEN}enter the sorting algorithm [quick sort, bubble sort]: {TextColors.RESET}"):
     case "bubble sort" | "bubblesort":
         print(
@@ -134,16 +177,11 @@ match input(f"{TextColors.GREEN}enter the sorting algorithm [quick sort, bubble 
     case _:
         print("wrong input")
         exit()
+# endregion
 
 fig, ax = plt.subplots()
 
-
-def update(frame):
-    img = plt.imread(frame)
-    ax.imshow(img)
-    ax.axis('off')
-
-
+# region rendering
 plot_filenames = sorted(
     [os.path.join(plot_directory, fname) for fname in os.listdir(plot_directory) if fname.endswith('.png')])
 
@@ -153,7 +191,26 @@ print(f"{TextColors.CYAN}rendering gif from plot images...{TextColors.RESET}")
 
 for filename in plot_filenames:
     images.append(imageio.imread(filename))
-imageio.mimsave(gif_directory + '\\animation_of_plots.gif', images)
+imageio.mimsave(render_directory + '\\animation_of_plots.gif', images)
+
+
+
+print(f"{TextColors.CYAN}exporting audio file...{TextColors.RESET}")
+melody.export(render_directory + "\\melody.wav", format="wav")
+
+
+print(f"{TextColors.CYAN}creating video...{TextColors.RESET}")
+
+gif_clip = VideoFileClip(render_directory + "\\animation_of_plots.gif")
+audio_clip = AudioFileClip(render_directory + "\\melody.wav")
+
+gif_clip = gif_clip.set_duration(max(gif_clip.duration, audio_clip.duration) + 2)
+
+video_with_audio = gif_clip.set_audio(audio_clip)
+
+progress_logger = TqdmProgressBarLogger(bars=['main'],print_messages=False,notebook=False)
+video_with_audio.write_videofile(render_directory + "\\output_video.mp4", codec="libx264", audio_codec="aac", logger=progress_logger)
+
 
 print(f"{TextColors.BOLD}{TextColors.CYAN}done! opening the render directory")
 try:
@@ -163,3 +220,4 @@ except Exception as e:
     print(f"Failed to open the render directory. Reason: {e}")
     print(
         f"{render_directory}{TextColors.RESET}")
+# endregion
