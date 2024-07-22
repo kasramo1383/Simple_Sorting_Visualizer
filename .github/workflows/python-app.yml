@@ -2,6 +2,9 @@ name: Build Executable
 
 on: [push, pull_request]
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: windows-latest
@@ -15,7 +18,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v2
       with:
-        python-version: '3.12'
+        python-version: '3.x'  # specify your required Python version
 
     - name: Install dependencies
       run: |
