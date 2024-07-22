@@ -102,7 +102,7 @@ def draw_bar_graph(highlighted_element):
     colors[highlighted_element] = 'red'
 
     plt.figure(figsize=(20, 10), dpi=150)
-    plt.bar(x, global_number_list, color=colors, edgecolor='black')
+    plt.bar(x, global_number_list, color=colors)
 
     plt.gca().xaxis.set_major_locator(MaxNLocator(integer=True))
     plt.gca().yaxis.set_major_locator(MaxNLocator(integer=True))
@@ -117,13 +117,13 @@ def draw_bar_graph(highlighted_element):
 
 def draw_final_bar_graphs():
     global plot_counter
-    colors = ['white'] * len(global_number_list)
+    colors = ['gray'] * len(global_number_list)
     for i in range(len(global_number_list)):
         x = np.arange(len(global_number_list))
         colors[i] = 'green'
 
         plt.figure(figsize=(20, 10), dpi=150)
-        plt.bar(x, global_number_list, color=colors, edgecolor='black')
+        plt.bar(x, global_number_list, color=colors)
 
         plt.gca().xaxis.set_major_locator(MaxNLocator(integer=True))
         plt.gca().yaxis.set_major_locator(MaxNLocator(integer=True))
