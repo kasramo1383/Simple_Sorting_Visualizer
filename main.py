@@ -226,8 +226,10 @@ plot_filenames = sorted(
 
 batch_size = 100  # it takes up too much memory lol
 batch_counter = 0
+print(
+    f"{TextColors.YELLOW}{plot_counter} plots. Seperated into {math.ceil(plot_counter / batch_size)} batches{TextColors.RESET}")
 batches = [plot_filenames[i:i + batch_size] for i in range(0, len(plot_filenames), batch_size)]
-clips = [] # for concatenating all gifs
+clips = []  # for concatenating all gifs
 
 for batch in batches:
     batch_counter += 1
