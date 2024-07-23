@@ -1,4 +1,3 @@
-# region Modules
 import random
 import matplotlib.pyplot as plt
 import numpy as np
@@ -6,18 +5,18 @@ import os
 import math
 
 import imageio.v2 as imageio
+import aspose.words as aw
 
 import shutil
 
 from matplotlib.ticker import MaxNLocator
+from moviepy.video.compositing.concatenate import concatenate_videoclips
 from pydub import AudioSegment
 from pydub.generators import Sine
 
 from proglog import TqdmProgressBarLogger
 from moviepy.editor import VideoFileClip, AudioFileClip
 
-
-# endregion
 
 class TextColors:
     MAGENTA = '\033[95m'
@@ -40,6 +39,7 @@ global_number_list = [i for i in range(1, n + 1)]
 
 render_directory = os.getcwd() + "\\visual render of sorting"
 plot_directory = render_directory + "\\plots"
+batch_gif_directory = render_directory + "\\batch gifs"
 
 plot_counter = 0
 comparison_count = 0
@@ -145,7 +145,8 @@ def number_to_frequency_and_add_tone(number, max_number):
 
 
 def all_number_to_frequency_and_add_tone():
-    for element in global_number_list: number_to_frequency_and_add_tone(element, n)
+    for element in global_number_list:
+        number_to_frequency_and_add_tone(element, n)
 
 
 def generate_tone(frequency, duration=100):
@@ -171,6 +172,7 @@ except Exception as e:
 
 os.makedirs(render_directory)
 os.makedirs(plot_directory)
+os.makedirs(batch_gif_directory)
 
 # region Sorting Algorithm match case
 match input(f"{TextColors.GREEN}enter the sorting algorithm [quick sort, bubble sort]: {TextColors.RESET}"):
@@ -183,12 +185,12 @@ match input(f"{TextColors.GREEN}enter the sorting algorithm [quick sort, bubble 
 
         theoretical_operations = n ** 2
 
-        print(f"{TextColors.YELLOW}        <--------TECHNICAL INFO-------->")
+        print(f"{TextColors.YELLOW}        <--------TECHNICAL INFO-------->\n")
         print(global_number_list)
         print(f"Total comparisons: {comparison_count}")
         print(f"Total swaps: {swap_count}")
         print(f"Theoretical operations (O(n^2)): {theoretical_operations:.0f}")
-        print(f"{TextColors.YELLOW}        <-------/TECHNICAL INFO-------->{TextColors.RESET}")
+        print(f"\n{TextColors.YELLOW}        <-------/TECHNICAL INFO-------->{TextColors.RESET}")
 
     case "quick sort" | "quicksort":
         draw_bar_graph(len(global_number_list) - 1)
@@ -217,26 +219,34 @@ print(f"{TextColors.CYAN}rendering the final state of the array...{TextColors.RE
 draw_final_bar_graphs()
 all_number_to_frequency_and_add_tone()
 
-plot_filenames = sorted(
-    [os.path.join(plot_directory, fname) for fname in os.listdir(plot_directory) if fname.endswith('.png')])
-
-images = []
-
 print(f"{TextColors.CYAN}creating gif from plot images...{TextColors.RESET}")
+plot_filenames = sorted(
+    [os.path.join(plot_directory, frame_name) for frame_name in os.listdir(plot_directory) if
+     frame_name.endswith('.png')])
 
-for filename in plot_filenames:
-    images.append(imageio.imread(filename))
-imageio.mimsave(render_directory + '\\animation_of_plots.gif', images)
+batch_size = 100  # it takes up too much memory lol
+batch_counter = 0
+batches = [plot_filenames[i:i + batch_size] for i in range(0, len(plot_filenames), batch_size)]
+clips = [] # for concatenating all gifs
+
+for batch in batches:
+    batch_counter += 1
+    print(f"{TextColors.CYAN}{TextColors.UNDERLINE}started batch {batch_counter}...{TextColors.RESET}")
+    batch_images = [imageio.imread(frame_name) for frame_name in batch]
+    imageio.mimsave(os.path.join(batch_gif_directory, f"batch_gif_{batch_counter:03d}.gif"), batch_images)
+    del batch_images
+    clips.append(VideoFileClip(batch_gif_directory + f"\\batch_gif_{batch_counter:03d}.gif"))
 
 print(f"{TextColors.CYAN}creating audio file...{TextColors.RESET}")
 melody.export(render_directory + "\\melody.wav", format="wav")
 
 print(f"{TextColors.CYAN}creating video...{TextColors.RESET}")
 
-gif_clip = VideoFileClip(render_directory + "\\animation_of_plots.gif")
+clips[-1] = clips[-1].set_duration(clips[-1].duration + 2)
+gif_clip = concatenate_videoclips(clips, method="compose")
 audio_clip = AudioFileClip(render_directory + "\\melody.wav")
 
-gif_clip = gif_clip.set_duration(max(gif_clip.duration, audio_clip.duration) + 2)
+gif_clip = gif_clip.set_duration(max(gif_clip.duration, audio_clip.duration))
 
 video_with_audio = gif_clip.set_audio(audio_clip)
 
