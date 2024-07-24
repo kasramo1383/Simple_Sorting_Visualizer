@@ -5,7 +5,6 @@ import os
 import math
 
 import imageio.v2 as imageio
-import aspose.words as aw
 
 import shutil
 
@@ -66,7 +65,6 @@ def quicksort(lower_bound, upper_bound):
                 second_half.append(number_list[i])
 
         global_number_list[lower_bound:upper_bound + 1] = first_half + [pivot] + second_half
-        swap_count += 1
 
         pivot_index = lower_bound + len(first_half)
         draw_bar_graph(pivot_index)
